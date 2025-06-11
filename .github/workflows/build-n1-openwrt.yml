@@ -73,9 +73,9 @@ jobs:
     - name: 加载自定义配置
       working-directory: /workdir
       run: |
-        [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE_MINIMAL ] && mv $CONFIG_FILE_MINIMAL openwrt/.config
-        [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH
+        [ -e files ] && mv files openwrt/files || true
+        [ -e $CONFIG_FILE_MINIMAL ] && mv $CONFIG_FILE_MINIMAL openwrt/.config || true
+        [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH || true
 
     - name: SSH连接到Actions
       uses: P3TERX/ssh2actions@v1.0.0
@@ -192,9 +192,9 @@ jobs:
     - name: 加载自定义配置
       working-directory: /workdir
       run: |
-        [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE_BYPASS ] && mv $CONFIG_FILE_BYPASS openwrt/.config
-        [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH
+        [ -e files ] && mv files openwrt/files || true
+        [ -e $CONFIG_FILE_BYPASS ] && mv $CONFIG_FILE_BYPASS openwrt/.config || true
+        [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH || true
 
     - name: SSH连接到Actions
       uses: P3TERX/ssh2actions@v1.0.0
