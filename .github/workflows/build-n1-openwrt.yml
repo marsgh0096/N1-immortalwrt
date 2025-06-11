@@ -29,6 +29,7 @@ env:
   REPO_BRANCH: openwrt-24.10
   CONFIG_FILE_MINIMAL: configs/n1-minimal.config
   CONFIG_FILE_BYPASS: configs/n1-bypass.config
+  CONFIG_FILE_BYPASS: configs/x86_64.config
   DIY_P1_SH: scripts/diy-part1.sh
   DIY_P2_SH: scripts/diy-part2.sh
   UPLOAD_BIN_DIR: false
