@@ -475,7 +475,7 @@ build-PC:
       uses: actions/upload-artifact@main
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_N1_旁路由${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_x86_64${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
 
     - name: 生成发布标签
@@ -484,11 +484,10 @@ build-PC:
       run: |
         echo "release_tag=N1_旁路由_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        echo "🚀 斐讯N1 OpenWRT旁路由版固件" >> release.txt
+        echo "🚀 x86_64OpenWRT固件" >> release.txt
         echo "📅 编译时间: $(date +"%Y年%m月%d日%H时%M分")" >> release.txt
         echo "🌟 源码仓库: ${{ env.REPO_URL }}" >> release.txt
         echo "🌿 源码分支: ${{ env.REPO_BRANCH }}" >> release.txt
-        echo "💡 包含功能: IPv6支持 + MosDNS + PassWall + 晶晨宝盒" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 上传固件到release
