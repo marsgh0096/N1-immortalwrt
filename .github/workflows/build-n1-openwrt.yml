@@ -64,11 +64,14 @@ jobs:
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: 加载自定义feeds
+      working-directory: /workdir/openwrt
       run: |
-        [ -e $DIY_P1_SH ] && chmod +x $DIY_P1_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P1_SH
-        cd openwrt && ./scripts/feeds update -a && ./scripts/feeds install -a
+        [ -e $GITHUB_WORKSPACE/$DIY_P1_SH ] && chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH && $GITHUB_WORKSPACE/$DIY_P1_SH
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
 
     - name: 加载自定义配置
+      working-directory: /workdir
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE_MINIMAL ] && mv $CONFIG_FILE_MINIMAL openwrt/.config
@@ -180,11 +183,14 @@ jobs:
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: 加载自定义feeds
+      working-directory: /workdir/openwrt
       run: |
-        [ -e $DIY_P1_SH ] && chmod +x $DIY_P1_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P1_SH
-        cd openwrt && ./scripts/feeds update -a && ./scripts/feeds install -a
+        [ -e $GITHUB_WORKSPACE/$DIY_P1_SH ] && chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH && $GITHUB_WORKSPACE/$DIY_P1_SH
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
 
     - name: 加载自定义配置
+      working-directory: /workdir
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE_BYPASS ] && mv $CONFIG_FILE_BYPASS openwrt/.config
