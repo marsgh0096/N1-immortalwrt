@@ -13,6 +13,4 @@ echo 'src-git mosdns https://github.com/sbwml/luci-app-mosdns' >>feeds.conf.defa
 # 添加晶晨宝盒
 echo 'src-git amlogic https://github.com/ophub/luci-app-amlogic' >>feeds.conf.default
 
-# 更新feeds
-./scripts/feeds update -a
-./scripts/feeds install -a 
+# 注意：feeds的更新和安装将在主工作流中处理 
