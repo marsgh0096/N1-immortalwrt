@@ -84,7 +84,7 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: 下载dl库
+    - name: 下载配置文件
       id: package
       run: |
         cd openwrt
@@ -203,7 +203,7 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: 下载dl库
+    - name: 下载配置文件
       id: package
       run: |
         cd openwrt
@@ -232,7 +232,7 @@ jobs:
       env:
         OPENWRT_ARMVIRT: openwrt/bin/targets/*/*/*.tar.gz
         PACKAGE_SOC: s905d
-        KERNEL_VERSION_NAME: 6.1.1_5.15.1
+        KERNEL_VERSION_NAME: 6.6.y_5.15.1
 
     - name: 整理文件
       id: organize
