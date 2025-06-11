@@ -18,6 +18,11 @@ on:
         required: false
         default: true
         type: boolean
+      build_bypass:
+        description: '编译x86_64版本'
+        required: false
+        default: true
+        type: boolean
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
