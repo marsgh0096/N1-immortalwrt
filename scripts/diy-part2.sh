@@ -20,4 +20,7 @@ sed -i "/timezone='CST-8'/a\\\t\t\tset system.@system[-1].zonename='Asia/Shangha
 # 修改默认主题（如果存在）
 # sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
 
+# 替换opkg源为清华源
+sed -i 's|http://downloads.openwrt.org|https://mirrors.tuna.tsinghua.edu.cn/openwrt|g' package/base-files/files/etc/opkg/distfeeds.conf
+
 echo "DIY-part2.sh 脚本执行完成" 
