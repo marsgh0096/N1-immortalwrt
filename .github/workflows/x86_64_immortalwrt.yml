@@ -135,10 +135,10 @@ jobs:
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
 
-  build-mac-m1:
+  build-armvirt64-utm-qemu:
     if: github.event.inputs.target == 'mac_m1'
     runs-on: macos-14
-    name: 编译Mac M1 (arm64) 版本
+    name: 编译 UTM/QEMU (armvirt/64) 镜像
     env:
       REPO_URL: https://github.com/immortalwrt/immortalwrt
       REPO_BRANCH: openwrt-24.10
@@ -208,34 +208,46 @@ jobs:
         if: (!cancelled())
         run: df -h
 
-      - name: 整理文件
+      - name: 整理 UTM/QEMU 镜像文件
         id: organize
         if: steps.compile.outputs.status == 'success' && !cancelled()
         run: |
           cd $GITHUB_WORKSPACE/openwrt/bin/targets/armvirt/64
+          ls -lh
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
+          echo "IMG_FILES=$(ls *.img* *.qcow2* 2>/dev/null | xargs echo)" >> $GITHUB_ENV
 
-      - name: 上传固件目录
+      - name: 上传 UTM/QEMU 镜像到 artifact
         uses: actions/upload-artifact@main
         if: steps.organize.outputs.status == 'success' && !cancelled()
         with:
-          name: Mac_M1_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-          path: ${{ env.FIRMWARE }}
+          name: UTM_QEMU_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+          path: ${{ env.FIRMWARE }}/*.img*
+          retention-days: 7
+
+      - name: 上传 UTM/QEMU qcow2 镜像到 artifact
+        uses: actions/upload-artifact@main
+        if: steps.organize.outputs.status == 'success' && !cancelled()
+        with:
+          name: UTM_QEMU_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}_qcow2
+          path: ${{ env.FIRMWARE }}/*.qcow2*
+          retention-days: 7
 
       - name: 生成发布标签
         id: tag
         if: env.UPLOAD_RELEASE == 'true' && !cancelled()
         run: |
-          echo "release_tag=mac_m1_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+          echo "release_tag=mac_m1_utm_qemu_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
           touch release.txt
-          echo "🚀 Mac M1 OpenWRT固件" >> release.txt
+          echo "🚀 Mac M1 UTM/QEMU OpenWRT固件" >> release.txt
           echo "📅 编译时间: $(date +"%Y年%m月%d日%H时%M分")" >> release.txt
           echo "🌟 源码仓库: ${{ env.REPO_URL }}" >> release.txt
           echo "🌿 源码分支: ${{ env.REPO_BRANCH }}" >> release.txt
+          echo "💡 适用于 UTM/QEMU 虚拟机" >> release.txt
           echo "status=success" >> $GITHUB_OUTPUT
 
-      - name: 上传固件到release
+      - name: 上传 UTM/QEMU 镜像到 release
         uses: softprops/action-gh-release@v1
         if: steps.tag.outputs.status == 'success' && !cancelled()
         env:
@@ -243,4 +255,6 @@ jobs:
         with:
           tag_name: ${{ steps.tag.outputs.release_tag }}
           body_path: release.txt
-          files: ${{ env.FIRMWARE }}/* 
+          files: |
+            ${{ env.FIRMWARE }}/*.img*
+            ${{ env.FIRMWARE }}/*.qcow2* 
