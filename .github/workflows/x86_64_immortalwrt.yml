@@ -126,111 +126,111 @@ jobs:
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
 
-    build-mac-m1:
-      runs-on: macos-14
-      name: 编译Mac M1 (arm64) 版本
-      env:
-        REPO_URL: https://github.com/immortalwrt/immortalwrt
-        REPO_BRANCH: openwrt-24.10
-        CONFIG_FILE_MAC: configs/arm64_mac_m1.config
-        DIY_P1_SH: scripts/diy-part1.sh
-        DIY_P2_SH: scripts/diy-part2.sh
-        UPLOAD_BIN_DIR: false
-        UPLOAD_FIRMWARE: true
-        UPLOAD_COWTRANSFER: false
-        UPLOAD_WETRANSFER: false
-        UPLOAD_RELEASE: true
-        TZ: Asia/Shanghai
-      steps:
-        - name: 检查项目
-          uses: actions/checkout@main
+  build-mac-m1:
+    runs-on: macos-14
+    name: 编译Mac M1 (arm64) 版本
+    env:
+      REPO_URL: https://github.com/immortalwrt/immortalwrt
+      REPO_BRANCH: openwrt-24.10
+      CONFIG_FILE_MAC: configs/arm64_mac_m1.config
+      DIY_P1_SH: scripts/diy-part1.sh
+      DIY_P2_SH: scripts/diy-part2.sh
+      UPLOAD_BIN_DIR: false
+      UPLOAD_FIRMWARE: true
+      UPLOAD_COWTRANSFER: false
+      UPLOAD_WETRANSFER: false
+      UPLOAD_RELEASE: true
+      TZ: Asia/Shanghai
+    steps:
+      - name: 检查项目
+        uses: actions/checkout@main
 
-        - name: 初始化编译环境
-          run: |
-            brew update
-            brew install coreutils gnu-sed gawk wget git make python@3.11
-            sudo ln -sf /usr/local/bin/gmake /usr/local/bin/make || true
-            sudo mkdir -p /workdir
-            sudo chown $USER:staff /workdir
+      - name: 初始化编译环境
+        run: |
+          brew update
+          brew install coreutils gnu-sed gawk wget git make python@3.11
+          sudo ln -sf /usr/local/bin/gmake /usr/local/bin/make || true
+          sudo mkdir -p /workdir
+          sudo chown $USER:staff /workdir
 
-        - name: 下载源代码
-          working-directory: /workdir
-          run: |
-            df -hT .
-            git clone $REPO_URL -b $REPO_BRANCH openwrt
-            ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+      - name: 下载源代码
+        working-directory: /workdir
+        run: |
+          df -hT .
+          git clone $REPO_URL -b $REPO_BRANCH openwrt
+          ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-        - name: 加载自定义feeds
-          working-directory: /workdir/openwrt
-          run: |
-            [ -e $GITHUB_WORKSPACE/$DIY_P1_SH ] && chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH && $GITHUB_WORKSPACE/$DIY_P1_SH
-            ./scripts/feeds update -a
-            ./scripts/feeds install -a
+      - name: 加载自定义feeds
+        working-directory: /workdir/openwrt
+        run: |
+          [ -e $GITHUB_WORKSPACE/$DIY_P1_SH ] && chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH && $GITHUB_WORKSPACE/$DIY_P1_SH
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
 
-        - name: 加载自定义配置
-          working-directory: /workdir
-          run: |
-            [ -e files ] && mv files openwrt/files || true
-            [ -e $CONFIG_FILE_MAC ] && mv $CONFIG_FILE_MAC openwrt/.config || true
-            [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH || true
+      - name: 加载自定义配置
+        working-directory: /workdir
+        run: |
+          [ -e files ] && mv files openwrt/files || true
+          [ -e $CONFIG_FILE_MAC ] && mv $CONFIG_FILE_MAC openwrt/.config || true
+          [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH || true
 
-        - name: 下载配置文件
-          id: package
-          run: |
-            cd openwrt
-            make defconfig
-            make download -j8
-            find dl -size -1024c -exec ls -l {} \;
-            find dl -size -1024c -exec rm -f {} \;
+      - name: 下载配置文件
+        id: package
+        run: |
+          cd openwrt
+          make defconfig
+          make download -j8
+          find dl -size -1024c -exec ls -l {} \;
+          find dl -size -1024c -exec rm -f {} \;
 
-        - name: 编译固件
-          id: compile
-          run: |
-            cd openwrt
-            echo -e "$(sysctl -n hw.ncpu) thread compile"
-            make -j$(sysctl -n hw.ncpu) || make -j1 || make -j1 V=s
-            echo "status=success" >> $GITHUB_OUTPUT
-            grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -E 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-            [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-            echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+      - name: 编译固件
+        id: compile
+        run: |
+          cd openwrt
+          echo -e "$(sysctl -n hw.ncpu) thread compile"
+          make -j$(sysctl -n hw.ncpu) || make -j1 || make -j1 V=s
+          echo "status=success" >> $GITHUB_OUTPUT
+          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -E 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
+          [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+          echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
-        - name: 检查空间使用情况
-          if: (!cancelled())
-          run: df -h
+      - name: 检查空间使用情况
+        if: (!cancelled())
+        run: df -h
 
-        - name: 整理文件
-          id: organize
-          if: steps.compile.outputs.status == 'success' && !cancelled()
-          run: |
-            cd $GITHUB_WORKSPACE/openwrt/bin/targets/armvirt/64
-            echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-            echo "status=success" >> $GITHUB_OUTPUT
+      - name: 整理文件
+        id: organize
+        if: steps.compile.outputs.status == 'success' && !cancelled()
+        run: |
+          cd $GITHUB_WORKSPACE/openwrt/bin/targets/armvirt/64
+          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
 
-        - name: 上传固件目录
-          uses: actions/upload-artifact@main
-          if: steps.organize.outputs.status == 'success' && !cancelled()
-          with:
-            name: Mac_M1_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-            path: ${{ env.FIRMWARE }}
+      - name: 上传固件目录
+        uses: actions/upload-artifact@main
+        if: steps.organize.outputs.status == 'success' && !cancelled()
+        with:
+          name: Mac_M1_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+          path: ${{ env.FIRMWARE }}
 
-        - name: 生成发布标签
-          id: tag
-          if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-          run: |
-            echo "release_tag=mac_m1_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-            touch release.txt
-            echo "🚀 Mac M1 OpenWRT固件" >> release.txt
-            echo "📅 编译时间: $(date +"%Y年%m月%d日%H时%M分")" >> release.txt
-            echo "🌟 源码仓库: ${{ env.REPO_URL }}" >> release.txt
-            echo "🌿 源码分支: ${{ env.REPO_BRANCH }}" >> release.txt
-            echo "status=success" >> $GITHUB_OUTPUT
+      - name: 生成发布标签
+        id: tag
+        if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+        run: |
+          echo "release_tag=mac_m1_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
+          touch release.txt
+          echo "🚀 Mac M1 OpenWRT固件" >> release.txt
+          echo "📅 编译时间: $(date +"%Y年%m月%d日%H时%M分")" >> release.txt
+          echo "🌟 源码仓库: ${{ env.REPO_URL }}" >> release.txt
+          echo "🌿 源码分支: ${{ env.REPO_BRANCH }}" >> release.txt
+          echo "status=success" >> $GITHUB_OUTPUT
 
-        - name: 上传固件到release
-          uses: softprops/action-gh-release@v1
-          if: steps.tag.outputs.status == 'success' && !cancelled()
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            tag_name: ${{ steps.tag.outputs.release_tag }}
-            body_path: release.txt
-            files: ${{ env.FIRMWARE }}/* 
+      - name: 上传固件到release
+        uses: softprops/action-gh-release@v1
+        if: steps.tag.outputs.status == 'success' && !cancelled()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          body_path: release.txt
+          files: ${{ env.FIRMWARE }}/* 
