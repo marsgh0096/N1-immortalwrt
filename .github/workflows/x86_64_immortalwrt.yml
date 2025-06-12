@@ -93,7 +93,7 @@ jobs:
       id: organize
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        cd /opt/openwrt_packit/output
+        cd $GITHUB_WORKSPACE/openwrt/bin/targets/x86/64
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
