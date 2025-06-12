@@ -23,7 +23,7 @@ env:
   TZ: Asia/Shanghai
 
 jobs:
- build-PC:
+  build-PC:
     runs-on: ubuntu-24.04
     name: 编译x86_64版本
 
@@ -42,7 +42,7 @@ jobs:
         sudo -E apt-get -qq clean
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
-        sudo chown $USER:$GROUPS /workdir
+        sudo chown $USER:$USER /workdir
 
     - name: 下载源代码
       working-directory: /workdir
@@ -62,7 +62,7 @@ jobs:
       working-directory: /workdir
       run: |
         [ -e files ] && mv files openwrt/files || true
-        [ -e $CONFIG_FILE_BYPASS ] && mv $CONFIG_FILE_PC openwrt/.config || true
+        [ -e $CONFIG_FILE_PC ] && mv $CONFIG_FILE_PC openwrt/.config || true
         [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH || true
 
     - name: 下载配置文件
