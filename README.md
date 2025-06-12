@@ -1,4 +1,4 @@
-# 斐讯N1 OpenWRT固件自动编译
+# 斐讯N1 OpenWRT自用固件自动编译
 
 本项目使用GitHub Actions自动编译斐讯N1（Amlogic S905）的OpenWRT固件。
 
@@ -18,46 +18,6 @@
 - ✅ MosDNS - 高性能DNS解析
 - ✅ PassWall - 科学上网工具
 - ✅ msd_lite IPTV组播
-
-## 🚀 使用方法
-
-### 1. Fork本仓库
-点击右上角的`Fork`按钮，将此仓库fork到你的GitHub账户。
-
-### 2. 启用GitHub Actions
-1. 进入你fork的仓库
-2. 点击`Actions`选项卡
-3. 点击`I understand my workflows, enable them`启用Actions
-
-### 3. 开始编译
-#### 方法一：手动触发
-1. 点击`Actions`选项卡
-2. 选择`编译斐讯N1 OpenWRT固件`
-3. 点击`Run workflow`
-4. 选择要编译的版本（精简版/旁路由版本）
-5. 点击`Run workflow`开始编译
-
-#### 方法二：修改代码自动触发
-修改任何文件并push到仓库，Actions会自动开始编译。
-
-### 4. 下载固件
-编译完成后，固件将上传到：
-- **Artifacts**：在Actions页面的编译记录中下载
-- **Releases**：在仓库的Releases页面下载
-
-## 📁 文件结构
-
-```
-├── .github/workflows/
-│   └── build-n1-openwrt.yml    # GitHub Actions工作流
-├── configs/
-│   ├── n1-minimal.config       # 精简版配置
-│   └── n1-bypass.config        # 旁路由版配置
-├── scripts/
-│   ├── diy-part1.sh            # 自定义feeds脚本
-│   └── diy-part2.sh            # 自定义配置脚本
-└── README.md
-```
 
 ## ⚙️ 自定义配置
 
