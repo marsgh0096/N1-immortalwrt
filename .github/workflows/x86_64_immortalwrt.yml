@@ -1,4 +1,4 @@
-name: 编译斐x86讯软路由immortalwrt固件
+name: 编译斐x86软路由immortalwrt固件
 on:
   repository_dispatch:
   workflow_dispatch:
