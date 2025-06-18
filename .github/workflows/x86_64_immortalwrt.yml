@@ -4,18 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: '选择编译平台'
         required: true
         default: 'x86_64'
         type: choice
         options:
           - x86_64
-          - mac_m1
-      ssh:
-        description: '编译x86_64版本'
-        required: false
-        default: true
-        type: boolean
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
@@ -32,11 +25,16 @@ env:
 
 jobs:
   build-PC:
-    if: github.event.inputs.target == 'x86_64'
     runs-on: ubuntu-22.04
     name: 编译x86_64版本
 
     steps:
+    - name: 最大化编译空间
+      uses: easimon/maximize-build-space@master
+      with:
+        root-reserve-mb: 512
+        swap-size-mb: 1024
+        remove-dotnet: 'true'
     - name: 检查项目
       uses: actions/checkout@main
 
@@ -52,7 +50,8 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$USER /workdir
-
+        $GITHUB_WORKSPACE/$OPENWRT_NAME/system-Information.sh
+    
     - name: 下载源代码
       working-directory: /workdir
       run: |
@@ -102,7 +101,8 @@ jobs:
       id: organize
       if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
-        cd $GITHUB_WORKSPACE/openwrt/bin/targets/x86/64
+        cd openwrt/bin/targets/x86/64
+        rm -rf packages *rootfs.tar.gz *rootfs.img.gz *combined.img.gz *.bin *.config *.buildinfo *.json sha256sums *.manifest
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -134,127 +134,3 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
-
-  build-armvirt64-utm-qemu:
-    if: github.event.inputs.target == 'mac_m1'
-    runs-on: macos-14
-    name: 编译 UTM/QEMU (armvirt/64) 镜像
-    env:
-      REPO_URL: https://github.com/immortalwrt/immortalwrt
-      REPO_BRANCH: openwrt-24.10
-      CONFIG_FILE_MAC: configs/arm64_mac_m1.config
-      DIY_P1_SH: scripts/diy-part1.sh
-      DIY_P2_SH: scripts/diy-part2.sh
-      UPLOAD_BIN_DIR: false
-      UPLOAD_FIRMWARE: true
-      UPLOAD_COWTRANSFER: false
-      UPLOAD_WETRANSFER: false
-      UPLOAD_RELEASE: true
-      TZ: Asia/Shanghai
-    steps:
-      - name: 检查项目
-        uses: actions/checkout@main
-
-      - name: 初始化编译环境
-        run: |
-          brew update
-          brew install coreutils gnu-sed gawk wget git make python@3.11
-          sudo ln -sf /usr/local/bin/gmake /usr/local/bin/make || true
-          sudo mkdir -p /workdir
-          sudo chown $USER:staff /workdir
-
-      - name: 下载源代码
-        working-directory: /workdir
-        run: |
-          df -hT .
-          git clone $REPO_URL -b $REPO_BRANCH openwrt
-          ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-
-      - name: 加载自定义feeds
-        working-directory: /workdir/openwrt
-        run: |
-          [ -e $GITHUB_WORKSPACE/$DIY_P1_SH ] && chmod +x $GITHUB_WORKSPACE/$DIY_P1_SH && $GITHUB_WORKSPACE/$DIY_P1_SH
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
-      - name: 加载自定义配置
-        working-directory: /workdir
-        run: |
-          [ -e files ] && mv files openwrt/files || true
-          [ -e $CONFIG_FILE_MAC ] && mv $CONFIG_FILE_MAC openwrt/.config || true
-          [ -e $DIY_P2_SH ] && chmod +x $DIY_P2_SH && cd openwrt && $GITHUB_WORKSPACE/$DIY_P2_SH || true
-
-      - name: 下载配置文件
-        id: package
-        run: |
-          cd openwrt
-          make defconfig
-          make download -j8
-          find dl -size -1024c -exec ls -l {} \;
-          find dl -size -1024c -exec rm -f {} \;
-
-      - name: 编译固件
-        id: compile
-        run: |
-          cd openwrt
-          echo -e "$(sysctl -n hw.ncpu) thread compile"
-          make -j$(sysctl -n hw.ncpu) || make -j1 || make -j1 V=s
-          echo "status=success" >> $GITHUB_OUTPUT
-          grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -E 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-          [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-          echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-
-      - name: 检查空间使用情况
-        if: (!cancelled())
-        run: df -h
-
-      - name: 整理 UTM/QEMU 镜像文件
-        id: organize
-        if: steps.compile.outputs.status == 'success' && !cancelled()
-        run: |
-          cd $GITHUB_WORKSPACE/openwrt/bin/targets/armvirt/64
-          ls -lh
-          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-          echo "status=success" >> $GITHUB_OUTPUT
-          echo "IMG_FILES=$(ls *.img* *.qcow2* 2>/dev/null | xargs echo)" >> $GITHUB_ENV
-
-      - name: 上传 UTM/QEMU 镜像到 artifact
-        uses: actions/upload-artifact@main
-        if: steps.organize.outputs.status == 'success' && !cancelled()
-        with:
-          name: UTM_QEMU_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
-          path: ${{ env.FIRMWARE }}/*.img*
-          retention-days: 7
-
-      - name: 上传 UTM/QEMU qcow2 镜像到 artifact
-        uses: actions/upload-artifact@main
-        if: steps.organize.outputs.status == 'success' && !cancelled()
-        with:
-          name: UTM_QEMU_OpenWRT固件${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}_qcow2
-          path: ${{ env.FIRMWARE }}/*.qcow2*
-          retention-days: 7
-
-      - name: 生成发布标签
-        id: tag
-        if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-        run: |
-          echo "release_tag=mac_m1_utm_qemu_$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
-          touch release.txt
-          echo "🚀 Mac M1 UTM/QEMU OpenWRT固件" >> release.txt
-          echo "📅 编译时间: $(date +"%Y年%m月%d日%H时%M分")" >> release.txt
-          echo "🌟 源码仓库: ${{ env.REPO_URL }}" >> release.txt
-          echo "🌿 源码分支: ${{ env.REPO_BRANCH }}" >> release.txt
-          echo "💡 适用于 UTM/QEMU 虚拟机" >> release.txt
-          echo "status=success" >> $GITHUB_OUTPUT
-
-      - name: 上传 UTM/QEMU 镜像到 release
-        uses: softprops/action-gh-release@v1
-        if: steps.tag.outputs.status == 'success' && !cancelled()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag.outputs.release_tag }}
-          body_path: release.txt
-          files: |
-            ${{ env.FIRMWARE }}/*.img*
-            ${{ env.FIRMWARE }}/*.qcow2* 
