@@ -47,9 +47,20 @@ jobs:
           sudo rm -rf /usr/local/lib/android # Android SDK
           sudo rm -rf /usr/share/swift # Swift 工具链
           sudo rm -rf /usr/local/share/boost # Boost 库
-          # 清理 apt 缓存
           sudo apt-get clean
           sudo apt-get autoremove --purge -y
+          sudo swapoff -a
+          sudo rm -f /swapfile /mnt/swapfile
+          sudo docker image prune -a -f
+          sudo systemctl stop docker
+          sudo snap set system refresh.retain=2
+          sudo apt-get -y purge firefox clang* ghc* google* llvm* mono* mongo* mysql* php*
+          sudo apt-get -y autoremove --purge
+          sudo apt-get clean
+          sudo rm -rf /etc/mysql /etc/php /usr/lib/jvm /usr/libexec/docker /usr/local /usr/src/* /var/lib/docker /var/lib/gems /var/lib/mysql /var/lib/snapd /etc/skel /opt/{microsoft,az,hostedtoolcache,cni,mssql-tools,pipx} /usr/share/{az*,dotnet,swift,miniconda,gradle*,java,kotlinc,ri,sbt} /root/{.sbt,.local,.npm}
+          sudo sed -i '/NVM_DIR/d;/skel/d' /root/{.bashrc,.profile}
+          rm -rf ~/{.cargo,.dotnet,.rustup}
+          df -Th
           echo "清理后的磁盘空间："
           df -h
     - name: 初始化编译环境
