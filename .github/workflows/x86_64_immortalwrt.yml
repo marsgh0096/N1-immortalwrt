@@ -50,7 +50,6 @@ jobs:
         sudo timedatectl set-timezone "$TZ"
         sudo mkdir -p /workdir
         sudo chown $USER:$USER /workdir
-        $GITHUB_WORKSPACE/$OPENWRT_NAME/system-Information.sh
     
     - name: 下载源代码
       working-directory: /workdir
