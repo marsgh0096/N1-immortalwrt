@@ -1,6 +1,6 @@
-# 斐讯N1 OpenWRT自用固件自动编译
+# 斐讯N1/x86 OpenWRT自用固件自动编译
 
-本项目使用GitHub Actions自动编译斐讯N1（Amlogic S905）的OpenWRT固件。
+本项目使用GitHub Actions自动编译斐讯N1（Amlogic S905）/x86的OpenWRT固件。
 
 ## 📋 功能特性
 
